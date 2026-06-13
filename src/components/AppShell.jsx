@@ -23,7 +23,6 @@ function Icon({ name }) {
 const BOTTOM_NAV = [
   { href: '/dashboard', label: 'Início', icon: 'home' },
   { href: '/garantias', label: 'Garantias', icon: 'list' },
-  { href: '/garantias/nova', label: 'Nova', icon: 'plus', fab: true },
   { href: '/configuracoes', label: 'Config.', icon: 'cog' },
 ];
 
@@ -113,29 +112,31 @@ export default function AppShell({ user, children }) {
       <nav className="fixed bottom-0 left-0 right-0 z-30 border-t border-slate-200 bg-white/95 backdrop-blur-sm lg:hidden"
         style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
         <div className="mx-auto flex max-w-md items-end">
-          {BOTTOM_NAV.map((item) =>
-            item.fab ? (
-              <Link key={item.href} href={item.href}
-                className="relative -top-4 mx-auto flex h-14 w-14 flex-shrink-0 items-center justify-center rounded-2xl bg-brand-600 text-white shadow-lg shadow-brand-200 transition-transform active:scale-95">
+          {BOTTOM_NAV.map((item) => (
+            <Link key={item.href} href={item.href}
+              className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors ${
+                isActive(item.href) ? 'text-brand-600' : 'text-slate-400'
+              }`}>
+              <span className={`transition-transform ${isActive(item.href) ? 'scale-110' : ''}`}>
                 <Icon name={item.icon} />
-              </Link>
-            ) : (
-              <Link key={item.href} href={item.href}
-                className={`flex flex-1 flex-col items-center gap-0.5 py-2 text-xs transition-colors ${
-                  isActive(item.href) ? 'text-brand-600' : 'text-slate-400'
-                }`}>
-                <span className={`transition-transform ${isActive(item.href) ? 'scale-110' : ''}`}>
-                  <Icon name={item.icon} />
-                </span>
-                <span className="font-medium">{item.label}</span>
-                {isActive(item.href) && (
-                  <span className="mt-0.5 h-1 w-1 rounded-full bg-brand-500" />
-                )}
-              </Link>
-            )
-          )}
+              </span>
+              <span className="font-medium">{item.label}</span>
+              {isActive(item.href) && (
+                <span className="mt-0.5 h-1 w-1 rounded-full bg-brand-500" />
+              )}
+            </Link>
+          ))}
         </div>
       </nav>
+
+      {/* ── FAB nova garantia (canto inferior direito) ── */}
+      <Link href="/garantias/nova"
+        className="fixed bottom-20 right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-brand-600 text-white shadow-xl shadow-brand-300 transition-transform active:scale-90 lg:hidden"
+        style={{ marginBottom: 'env(safe-area-inset-bottom)' }}>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" strokeWidth={2.5} stroke="currentColor" className="h-7 w-7">
+          <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
+        </svg>
+      </Link>
     </div>
   );
 }
