@@ -1,23 +1,18 @@
-// Backend via Google Apps Script Web App (sem Google Cloud, sem service account)
-// Variáveis necessárias no .env.local:
-//   GOOGLE_APPS_SCRIPT_URL=https://script.google.com/macros/s/.../exec
-//   GOOGLE_APPS_SCRIPT_SECRET=rc-garantia-2026  (mesmo valor do Apps Script)
+// Backend via Google Apps Script Web App
+// Usa GET com payload JSON na URL (evita problema de redirect do Apps Script com POST)
 
 const scriptUrl = () => process.env.GOOGLE_APPS_SCRIPT_URL;
 const secret = () => process.env.GOOGLE_APPS_SCRIPT_SECRET || 'rc-garantia-2026';
 
 async function call(action, data = {}) {
-  const res = await fetch(scriptUrl(), {
-    method: 'POST',
-    redirect: 'follow', // Apps Script redireciona o POST para a URL real
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ secret: secret(), action, data }),
-  });
+  const payload = encodeURIComponent(JSON.stringify({ secret: secret(), action, data }));
+  const url = `${scriptUrl()}?payload=${payload}`;
+  const res = await fetch(url, { redirect: 'follow' });
   const text = await res.text();
   try {
     return JSON.parse(text);
   } catch {
-    throw new Error('Resposta inválida do Apps Script: ' + text.slice(0, 200));
+    throw new Error('Resposta inválida do Apps Script: ' + text.slice(0, 300));
   }
 }
 

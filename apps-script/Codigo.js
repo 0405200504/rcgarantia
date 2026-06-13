@@ -13,7 +13,6 @@
 //  7. Coloque a URL no .env.local: GOOGLE_APPS_SCRIPT_URL=https://...
 // ══════════════════════════════════════════════════════════════════
 
-// ⚠️  TROQUE ESTA SENHA — use a mesma no .env.local (GOOGLE_APPS_SCRIPT_SECRET)
 const SECRET = 'rc-garantia-2026';
 
 const TERMOS = 'A garantia cobre exclusivamente o serviço realizado e as peças substituídas neste atendimento, dentro do prazo informado neste comprovante. A garantia não cobre danos causados por queda, contato com líquidos, mau uso, violação do aparelho por terceiros, uso de acessórios inadequados ou novos defeitos não relacionados ao serviço executado.';
@@ -27,28 +26,32 @@ const H = {
   M: ['chave','valor']
 };
 
-// ─── Entrada principal ───────────────────────────────────────────
+// ─── Entrada principal (GET com payload JSON na URL) ─────────────
 
-function doPost(e) {
+function doGet(e) {
   try {
-    const body = JSON.parse(e.postData.contents);
+    const raw = e.parameter && e.parameter.payload ? e.parameter.payload : '{}';
+    const body = JSON.parse(decodeURIComponent(raw));
+
     if (body.secret !== SECRET) return res({ error: 'Não autorizado' });
 
     ensureSetup();
 
-    const { action, data } = body;
+    const action = body.action;
+    const data = body.data || {};
+
     switch (action) {
-      case 'getUserByEmail':     return res(getUserByEmail(data.email));
-      case 'getUserById':        return res(getUserById(data.id));
-      case 'getConfig':          return res(getConfig());
-      case 'updateConfig':       return res(updateConfig(data));
-      case 'listGarantias':      return res(listGarantias());
-      case 'getGarantia':        return res(getGarantia(data.id));
+      case 'getUserByEmail':      return res(getUserByEmail(data.email));
+      case 'getUserById':         return res(getUserById(data.id));
+      case 'getConfig':           return res(getConfig());
+      case 'updateConfig':        return res(updateConfig(data));
+      case 'listGarantias':       return res(listGarantias());
+      case 'getGarantia':         return res(getGarantia(data.id));
       case 'getGarantiaByCodigo': return res(getGarantiaByCodigo(data.codigo));
-      case 'createGarantia':     return res(createGarantia(data));
-      case 'updateGarantia':     return res(updateGarantia(data.id, data.patch));
-      case 'setStatus':          return res(setStatus(data.id, data.status));
-      case 'deleteGarantia':     return res(deleteGarantia(data.id));
+      case 'createGarantia':      return res(createGarantia(data));
+      case 'updateGarantia':      return res(updateGarantia(data.id, data.patch));
+      case 'setStatus':           return res(setStatus(data.id, data.status));
+      case 'deleteGarantia':      return res(deleteGarantia(data.id));
       default: return res({ error: 'Ação desconhecida: ' + action });
     }
   } catch (err) {
@@ -66,11 +69,9 @@ function res(data) {
 function ensureSetup() {
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   const existentes = ss.getSheets().map(s => s.getName());
-
   Object.values(TABS).forEach(nome => {
     if (!existentes.includes(nome)) ss.insertSheet(nome);
   });
-
   const meta = getSheet(TABS.META);
   if (meta.getLastRow() < 2) {
     const now = new Date().toISOString();
@@ -78,9 +79,8 @@ function ensureSetup() {
     setHeadersIfEmpty(TABS.CONFIG, H.C);
     setHeadersIfEmpty(TABS.GARANTIAS, H.G);
     setHeadersIfEmpty(TABS.META, H.M);
-
     appendRow(TABS.USERS, [1, 'Administrador', 'admin@rcgarantia.com', hashPassword('123456'), now]);
-    appendRow(TABS.CONFIG, ['RC Assistência Técnica','','','','', TERMOS,'90','#2563eb','false',now,now]);
+    appendRow(TABS.CONFIG, ['RC Assistência Técnica','','','','',TERMOS,'90','#2563eb','false',now,now]);
     appendRow(TABS.META, ['garantia_counter','0']);
   }
 }
@@ -92,7 +92,7 @@ function setHeadersIfEmpty(tabName, headers) {
   }
 }
 
-// ─── Planilha: helpers ───────────────────────────────────────────
+// ─── Helpers de planilha ─────────────────────────────────────────
 
 function getSheet(name) {
   return SpreadsheetApp.getActiveSpreadsheet().getSheetByName(name);
@@ -115,8 +115,7 @@ function appendRow(tabName, rowArr) {
   getSheet(tabName).appendRow(rowArr);
 }
 
-// ─── Senha (SHA-256 + UUID salt, prefixo "sha256:") ─────────────
-// O Next.js reconhece este formato e verifica corretamente.
+// ─── Senha ───────────────────────────────────────────────────────
 
 function hashPassword(senha) {
   const salt = Utilities.getUuid();
@@ -165,7 +164,7 @@ function updateConfig(patch) {
   const current = getConfig();
   const updated = Object.assign({}, current, patch, { id:1, atualizado_em: new Date().toISOString() });
   if (updated.logo_url && String(updated.logo_url).startsWith('data:') && updated.logo_url.length > 40000) {
-    updated.logo_url = ''; // Sheets tem limite de 50k chars por célula
+    updated.logo_url = '';
   }
   const row = H.C.map(h => {
     if (h === 'prazo_padrao_garantia') return String(updated[h]);
