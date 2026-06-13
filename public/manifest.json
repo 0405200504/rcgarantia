@@ -1,0 +1,21 @@
+{
+  "name": "RC Garantia",
+  "short_name": "RC Garantia",
+  "description": "Gestão de garantias para assistência técnica de celulares",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#2563eb",
+  "orientation": "portrait-primary",
+  "lang": "pt-BR",
+  "categories": ["business", "utilities"],
+  "icons": [
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" },
+    { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "maskable" }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    { "name": "Nova Garantia", "url": "/garantias/nova", "description": "Cadastrar nova garantia" },
+    { "name": "Consultar Garantia", "url": "/consulta", "description": "Consulta pública" }
+  ]
+}
